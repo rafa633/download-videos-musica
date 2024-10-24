@@ -21,4 +21,4 @@ Este projeto é uma aplicação GUI para baixar vídeos e músicas do YouTube. U
 
 1. Clone este repositório:
    ```bash
-   git clone https://github.com/rafa633/download-Video-musicas.git
+   git clone https://github.com/rafa633/download-videos-musica.git
