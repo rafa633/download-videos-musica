@@ -3,6 +3,7 @@ from tkinter import messagebox, filedialog
 import yt_dlp
 import threading
 import os
+import json
 
 # Função de progresso para a barra de progresso
 def progress_hook(d):
@@ -15,6 +16,22 @@ def progress_hook(d):
     elif d['status'] == 'finished':
         progress_var.set("Download completo!")
         progress_bar.set(100)
+        save_download_history(url_entry.get(), format_var.get())
+        update_history_display(url_entry.get(), format_var.get())
+
+# Função para salvar o histórico de downloads
+def save_download_history(url, format_id):
+    history = load_download_history()
+    history.append({"url": url, "format": format_id})
+    with open("download_history.json", "w") as f:
+        json.dump(history, f)
+
+# Função para carregar o histórico de downloads
+def load_download_history():
+    if os.path.exists("download_history.json"):
+        with open("download_history.json", "r") as f:
+            return json.load(f)
+    return []
 
 # Função para baixar o vídeo ou áudio
 def baixar_video(url, format_id, somente_audio=False):
@@ -28,7 +45,7 @@ def baixar_video(url, format_id, somente_audio=False):
         'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
         'progress_hooks': [progress_hook],
     }
-    
+
     if somente_audio:
         ydl_opts['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
@@ -82,9 +99,15 @@ def atualizar_lista_formatos():
             format_menu.configure(values=[])
             format_var.set("Nenhum formato disponível")
 
+# Função para atualizar a exibição do histórico de downloads
+def update_history_display(url, format_id):
+    formatted_entry = f"URL: {url}\nFormato: {format_id}\n"  # Formato melhorado
+    history_display.insert(ctk.END, formatted_entry + "-"*50 + "\n")  # Divisória
+    history_display.yview(ctk.END)  # Rola para o final da lista
+
 # Configurações iniciais para o CustomTkinter
 ctk.set_appearance_mode("dark")  # Modo dark
-ctk.set_default_color_theme("blue")  # Tema azul
+ctk.set_default_color_theme("green")  # Tema verde
 
 # Configura a janela principal
 root = ctk.CTk()
@@ -93,8 +116,6 @@ root.geometry("600x600")
 
 # Fonte e cores
 font_style = ('Helvetica', 14)
-button_color = '#FF3C38'
-label_color = '#BDBDBD'
 
 # Widgets
 label = ctk.CTkLabel(root, text="Digite o link do vídeo do YouTube:", font=font_style)
@@ -125,6 +146,18 @@ progress_label.grid(row=6, column=0, padx=20, pady=10, sticky='w')
 progress_bar = ctk.CTkProgressBar(root, width=500)
 progress_bar.grid(row=7, column=0, padx=20, pady=10, sticky='ew')
 
+# Área para exibir o histórico de downloads
+history_label = ctk.CTkLabel(root, text="Histórico de Downloads:", font=font_style)
+history_label.grid(row=8, column=0, padx=20, pady=10, sticky='w')
+
+history_display = ctk.CTkTextbox(root, width=500, height=150, font=font_style)
+history_display.grid(row=9, column=0, padx=20, pady=10, sticky='ew')
+
 root.grid_columnconfigure(0, weight=1)
+
+# Carregar histórico de downloads ao iniciar
+historico = load_download_history()
+for entry in historico:
+    update_history_display(entry["url"], entry["format"])
 
 root.mainloop()
